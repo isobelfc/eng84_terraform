@@ -5,7 +5,7 @@ variable "vpc_id" {
 }
 
 variable "name" {
-    default = "eng84_isobel_terraform_variable_testing"
+    default = "eng84_isobel_terraform"
 }
 
 variable "webapp_ami_id" {
