@@ -13,7 +13,7 @@
 - `terraform init` - initiate terraform with required dependencies of the provider mentioned in `main.tf`
 - `terraform plan` - check syntax of code
 - `terraform apply` - run `.tf` file
-- `terraform destroy` -
+- `terraform destroy` - destroys current resources
 
 ### Securing AWS keys with Terraform
 - on Windows
