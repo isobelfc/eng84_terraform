@@ -28,7 +28,7 @@
 
 ### Terraform to launch ec2 with VPC, subnets, SG
 
-![Terraform diagram](terraform_diagram.png)
+![Terraform diagram](images/terraform_diagram.png)
 
 web ami: ami-09f4421394f9096d9
 db ami: ami-098bc304c16c31c4b
@@ -57,20 +57,44 @@ resource "aws_instance" "app_instance"{
 - AWS has a gov cloud for government sector only, and data centres we can't buy
 
 ### Public cloud
-![Public cloud diagram](public_cloud.png)
+![Public cloud diagram](images/public_cloud.png)
 - infrastructure based on provider data centres
 - not as secure
 - cheaper
 - scalable
 
 ### Private cloud
-![Private cloud diagram](private_cloud.png)
+![Private cloud diagram](images/private_cloud.png)
 - data centre based in the organisation
 - secure
 - expensive
 
 ### Hybrid cloud
-![Hybrid cloud diagram](hybrid_cloud.png)
+![Hybrid cloud diagram](images/hybrid_cloud.png)
 - a combination of private and public cloud
 - expensive
 - sensitive data can be stored securely, while still allowing scalability
+
+## Load Balancers
+
+### Network Load Balancer
+- switches between the tasks, e.g. payment gateway
+
+### Classic Load Balancer
+- works between the different availability zones
+- redirects traffic if one AZ is down
+
+### Auto-Scaling Groups
+- vertical scaling increases the size of our existing servers
+- horizontal scaling creates new servers of the same configuration
+- auto-scaling automatically scales our instances based on set criteria
+- needed in order to make our app highly available
+- scaling out is generally preferred as it increases availability, and saves money by reducing unused capacity
+
+![Scaling up and out diagram](images/scaling.png)
+
+### Route 53
+- Domain Name System (DNS), allowing users to connect to a site using a domain name, rather than an IP
+- it can also redirect traffic from multiple regions to load balancers
+
+![Route 53 diagram](images/route_53.png)

@@ -75,6 +75,13 @@ resource "aws_security_group" "app_sg" {
         cidr_blocks = ["0.0.0.0/0"]  # allow all
     }
 
+    ingress {
+        from_port = "22"  # to ssh into
+        to_port = "22"
+        protocol = "tcp"
+        cidr_blocks = ["${var.my_ip}"]  # from my ip only
+    }
+
     # outbound rules
     egress {
         from_port = 0
@@ -112,10 +119,16 @@ resource "aws_instance" "app_instance" {
 
     # set subnet - add this line after creation of subnet
     subnet_id = aws_subnet.public_subnet.id
+
+    # provisioner "file" {
+    #   source      = "./scripts/app/init.sh.tpl"
+    #   destination = "/etc"
+    # }
+
 }
 
 
-# inject script into the instance
-data "template_file" "app_init" {
-    template = "${file("./scripts/app/init.sh.tpl")}"
-}
+# # inject script into the instance
+# data "template_file" "app_init" {
+#     template = "${file("./scripts/app/init.sh.tpl")}"
+# }
