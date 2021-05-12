@@ -126,3 +126,17 @@ resource "aws_instance" "app_instance" {
     # }
 
 }
+
+
+resource "aws_autoscaling_group" "asg" {
+    name = var.name
+    availability_zones = ["eu-west-1a"]
+    desired_capacity = 1
+    max_size = 1
+    min_size = 1
+
+    launch_template {
+        id      = var.launch_template_id
+        version = "$Latest"
+    }
+}
