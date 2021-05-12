@@ -136,7 +136,7 @@ resource "aws_autoscaling_group" "asg" {
     min_size = 1
 
     launch_template {
-        id      = var.launch_template_id
+        id = var.launch_template_id
         version = "$Latest"
     }
 }
