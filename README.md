@@ -76,13 +76,16 @@ resource "aws_instance" "app_instance"{
 - sensitive data can be stored securely, while still allowing scalability
 
 ## Load Balancers
+### Application Load Balancer
 
 ### Network Load Balancer
-- switches between the tasks, e.g. payment gateway
+- switches between the tasks, e.g. payment gateway and product display
 
 ### Classic Load Balancer
 - works between the different availability zones
 - redirects traffic if one AZ is down
+
+![Classic load balancer diagram](images/classic_load_balancer.png)
 
 ### Auto-Scaling Groups
 - vertical scaling increases the size of our existing servers

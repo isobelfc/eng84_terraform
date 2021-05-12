@@ -1,11 +1,15 @@
 # variable.tf
 
-variable "vpc_id" {
-    default = "vpc-07e47e9d90d2076da"
+variable "my_ip" {
+    default = "0.0.0.0/32"  # replace with own ip
 }
 
 variable "name" {
     default = "eng84_isobel_terraform"
+}
+
+variable "vpc_id" {
+    default = "vpc-07e47e9d90d2076da"
 }
 
 variable "webapp_ami_id" {
@@ -28,6 +32,6 @@ variable "aws_key_path" {
     default = "~/.ssh/eng84devops.pem"
 }
 
-variable "my_ip" {
-    default = "0.0.0.0/32"  # replace with own ip
+variable "launch_template_id" {
+    default = "lt-089086dec608bfa8a"
 }

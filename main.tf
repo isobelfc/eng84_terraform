@@ -126,9 +126,3 @@ resource "aws_instance" "app_instance" {
     # }
 
 }
-
-
-# # inject script into the instance
-# data "template_file" "app_init" {
-#     template = "${file("./scripts/app/init.sh.tpl")}"
-# }
