@@ -21,7 +21,7 @@ variable "webapp_ami_id" {
 }
 
 variable "db_ami_id" {
-    default = "ami-098bc304c16c31c4b"
+    default = "ami-0eafa5cb3aad861de"
 }
 
 variable "aws_subnet" {
@@ -34,8 +34,4 @@ variable "aws_key_name" {
 
 variable "aws_key_path" {
     default = "~/.ssh/eng84devops.pem"
-}
-
-variable "launch_template_id" {
-    default = "lt-089086dec608bfa8a"
 }

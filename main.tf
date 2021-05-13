@@ -9,8 +9,8 @@ provider "aws"{
     region = var.region
 }
 
-# launching an EC2 instance from our webapp AMI
-# resource is the keyword
+
+# resource is a keyword
 
 
 resource "aws_vpc" "vpc" {
@@ -19,7 +19,7 @@ resource "aws_vpc" "vpc" {
     instance_tenancy = "default"
 
     tags = {
-        Name = "eng84_isobel_vpc_terraform_app"
+        Name = "${var.name}_vpc"
     }
 }
 
@@ -98,6 +98,13 @@ resource "aws_security_group" "app_sg" {
         to_port = "22"
         protocol = "tcp"
         cidr_blocks = ["${var.my_ip}"]  # from my ip only
+    }
+
+    ingress {
+        from_port = "27017"  # database access
+        to_port = "27017"
+        protocol = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]  # anywhere
     }
 
     # outbound rules
@@ -224,28 +231,60 @@ resource "aws_autoscaling_group" "asg" {
     availability_zones = ["eu-west-1a"]
     desired_capacity = 2
     max_size = 2
-    min_size = 1
+    min_size = 2
     target_group_arns = [aws_lb_target_group.lb_tg.arn]  # attach load balancer
 
-    # launch_template {
-    #     id = aws_launch_template.app_template.id
-    #     version = "$Latest"
-    # }
-
-    mixed_instances_policy {
-        launch_template {
-            launch_template_specification {
-                launch_template_id = aws_launch_template.app_template.id
-                # version = "$Latest"
-                }
-
-            override {
-                instance_type = "t2.micro"
-                launch_template_specification {
-                    launch_template_id = aws_launch_template.db_template.id
-                    # version = "$Latest"
-                }
-            }
-        }
+    launch_template {
+        id = aws_launch_template.app_template.id
+        version = "$Latest"
     }
+
+    # mixed_instances_policy {
+    #     launch_template {
+    #         launch_template_specification {
+    #             launch_template_id = aws_launch_template.app_template.id
+    #             # version = "$Latest"
+    #         }
+    #
+    #         # override {
+    #         #     instance_type = "t2.micro"
+    #         #     weighted_capacity = "1"
+    #         # }
+    #
+    #         override {
+    #             instance_type = "t2.micro"
+    #             launch_template_specification {
+    #                 launch_template_id = aws_launch_template.db_template.id
+    #                 # version = "$Latest"
+    #             }
+    #             weighted_capacity = "1"
+    #         }
+    #     }
+    # }
 }
+
+
+# db instance, not in asg
+resource "aws_instance" "db_instance" {
+    ami = var.db_ami_id
+    instance_type = "t2.micro"
+    associate_public_ip_address = true
+
+    tags = {
+        Name = "${var.name}_db"
+    }
+
+    key_name = "${var.aws_key_name}"
+    vpc_security_group_ids = ["${aws_security_group.app_sg.id}"]
+    subnet_id = aws_subnet.subnet_1.id
+}
+
+
+# to add:
+# commands in app instance:
+# cd eng84_cicd_jenkins/app
+# sudo npm install
+# sudo echo "export DB_HOST=mongodb://db_private_ip:27017/posts" >> ~/.bashrc
+# source ~/.bashrc
+# nodejs seeds/seed.js
+# nodejs app.js
