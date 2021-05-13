@@ -30,7 +30,7 @@ resource "aws_subnet" "subnet_1" {
     availability_zone = "eu-west-1a"
 
     tags = {
-        Name = "eng84_isobel_terraform_subnet_1"
+        Name = "${var.name}_subnet_1"
     }
 }
 
@@ -41,7 +41,7 @@ resource "aws_subnet" "subnet_2" {
     availability_zone = "eu-west-1b"
 
     tags = {
-        Name = "eng84_isobel_terraform_subnet_2"
+        Name = "${var.name}_subnet_2"
     }
 }
 
@@ -49,7 +49,7 @@ resource "aws_subnet" "subnet_2" {
 resource "aws_internet_gateway" "internet_gateway" {
     vpc_id = aws_vpc.vpc.id
     tags = {
-        Name = "eng84_isobel_terraform_app_ig"
+        Name = "${var.name}_ig"
     }
 }
 
@@ -63,7 +63,7 @@ resource "aws_route_table" "route_table" {
     }
 
     tags = {
-        Name = var.name
+        Name = "${var.name}_rt"
     }
 }
 
@@ -81,7 +81,7 @@ resource "aws_route_table_association" "rt_association_2" {
 
 
 resource "aws_security_group" "app_sg" {
-    name = "eng84_isobel_terraform_test"
+    name = "${var.name}_sg"
     description = "app group"
     vpc_id = aws_vpc.vpc.id
 
@@ -109,11 +109,12 @@ resource "aws_security_group" "app_sg" {
     }
 
     tags = {
-        Name = var.name
+        Name = "${var.name}_sg"
     }
 }
 
 
+# # 1st iteration - create instance from ami
 # resource "aws_instance" "app_instance" {
 #     # add AMI id
 #     ami = var.webapp_ami_id
@@ -146,6 +147,58 @@ resource "aws_security_group" "app_sg" {
 # }
 
 
+# 2nd iteration - use launch template in autoscaling group
+resource "aws_launch_template" "app_template" {
+    image_id = var.webapp_ami_id
+    instance_type = "t2.micro"
+    key_name = var.aws_key_name
+
+    network_interfaces {
+        associate_public_ip_address = true
+        security_groups = [aws_security_group.app_sg.id]
+        subnet_id = aws_subnet.subnet_1.id
+    }
+
+    tag_specifications {
+        resource_type = "instance"
+        tags = {
+            Name = "${var.name}_app"
+        }
+    }
+}
+
+
+# template for db instance
+resource "aws_launch_template" "db_template" {
+    image_id = var.db_ami_id
+    instance_type = "t2.micro"
+    key_name = var.aws_key_name
+
+    network_interfaces {
+        associate_public_ip_address = true
+        security_groups = [aws_security_group.app_sg.id]
+        subnet_id = aws_subnet.subnet_1.id
+    }
+
+    tag_specifications {
+        resource_type = "instance"
+        tags = {
+            Name = "${var.name}_db"
+        }
+    }
+}
+
+
+# load balancer target group
+resource "aws_lb_target_group" "lb_tg" {
+    name = "eng84-isobel-tf-target-group"
+    port = 80
+    protocol = "HTTP"
+    vpc_id = aws_vpc.vpc.id
+}
+
+
+# load balancer
 resource "aws_lb" "lb" {
     name = "eng84-isobel-terraform-lb"
     internal = false
@@ -155,36 +208,44 @@ resource "aws_lb" "lb" {
 }
 
 
-resource "aws_lb_target_group" "lb_tg" {
-    name = "eng84-isobel-tf-target-group"
-    port = 80
-    protocol = "HTTP"
-    vpc_id = aws_vpc.vpc.id
-}
-
-
 resource "aws_lb_listener" "lb_listener" {
-  load_balancer_arn = aws_lb.lb.arn
-  port = "80"
-  protocol = "HTTP"
-  default_action {
-    type = "forward"
-    target_group_arn = aws_lb_target_group.lb_tg.arn
-  }
+    load_balancer_arn = aws_lb.lb.arn
+    port = "80"
+    protocol = "HTTP"
+    default_action {
+        type = "forward"
+        target_group_arn = aws_lb_target_group.lb_tg.arn
+    }
 }
 
 
 resource "aws_autoscaling_group" "asg" {
-    name = var.name
-    availability_zones = ["eu-west-1a", "eu-west-1b"]
-    desired_capacity = 1
-    max_size = 1
+    name = "${var.name}_asg"
+    availability_zones = ["eu-west-1a"]
+    desired_capacity = 2
+    max_size = 2
     min_size = 1
-
-    launch_template {
-        id = var.launch_template_id
-        version = "$Latest"
-    }
-
     target_group_arns = [aws_lb_target_group.lb_tg.arn]  # attach load balancer
+
+    # launch_template {
+    #     id = aws_launch_template.app_template.id
+    #     version = "$Latest"
+    # }
+
+    mixed_instances_policy {
+        launch_template {
+            launch_template_specification {
+                launch_template_id = aws_launch_template.app_template.id
+                # version = "$Latest"
+                }
+
+            override {
+                instance_type = "t2.micro"
+                launch_template_specification {
+                    launch_template_id = aws_launch_template.db_template.id
+                    # version = "$Latest"
+                }
+            }
+        }
+    }
 }
