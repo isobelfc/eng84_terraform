@@ -8,6 +8,10 @@ variable "name" {
     default = "eng84_isobel_terraform"
 }
 
+variable "region" {
+    default = "eu-west-1"
+}
+
 variable "vpc_id" {
     default = "vpc-07e47e9d90d2076da"
 }

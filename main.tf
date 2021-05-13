@@ -6,7 +6,7 @@
 # provider is a keyword in Terraform to define the name of cloud provider
 
 provider "aws"{
-    region = "eu-west-1"
+    region = var.region
 }
 
 # launching an EC2 instance from our webapp AMI
@@ -32,12 +32,24 @@ resource "aws_internet_gateway" "internet_gateway" {
 }
 
 
-resource "aws_subnet" "public_subnet" {
+resource "aws_subnet" "subnet_1" {
     vpc_id = aws_vpc.vpc.id
     cidr_block = "10.0.1.0/24"
+    availability_zone = "eu-west-1a"
 
     tags = {
-        Name = "eng84_isobel_terraform_subnet_public"
+        Name = "eng84_isobel_terraform_subnet_1"
+    }
+}
+
+
+resource "aws_subnet" "subnet_2" {
+    vpc_id = aws_vpc.vpc.id
+    cidr_block = "10.0.2.0/24"
+    availability_zone = "eu-west-1b"
+
+    tags = {
+        Name = "eng84_isobel_terraform_subnet_2"
     }
 }
 
@@ -57,7 +69,7 @@ resource "aws_route_table" "route_table" {
 
 
 resource "aws_route_table_association" "rt_association" {
-  subnet_id = aws_subnet.public_subnet.id
+  subnet_id = aws_subnet.subnet_1.id
   route_table_id = aws_route_table.route_table.id
 }
 
@@ -118,13 +130,29 @@ resource "aws_instance" "app_instance" {
     vpc_security_group_ids = ["${aws_security_group.app_sg.id}"]
 
     # set subnet - add this line after creation of subnet
-    subnet_id = aws_subnet.public_subnet.id
+    subnet_id = aws_subnet.subnet_1.id
 
     # provisioner "file" {
     #   source      = "./scripts/app/init.sh.tpl"
     #   destination = "/etc"
     # }
 
+}
+
+
+resource "aws_lb" "lb" {
+    name = "eng84-isobel-terraform-lb-1"
+    load_balancer_type = "application"
+    security_groups = [aws_security_group.app_sg.id]
+    subnets = [aws_subnet.subnet_1.id, aws_subnet.subnet_2.id]
+}
+
+
+resource "aws_lb_target_group" "lb_tg" {
+    name = "eng84-isobel-tf-target-group"
+    port = 80
+    protocol = "HTTP"
+    vpc_id = aws_vpc.vpc.id
 }
 
 
@@ -139,4 +167,6 @@ resource "aws_autoscaling_group" "asg" {
         id = var.launch_template_id
         version = "$Latest"
     }
+
+    target_group_arns = [aws_lb_target_group.lb_tg.id]  # attach load balancer
 }
