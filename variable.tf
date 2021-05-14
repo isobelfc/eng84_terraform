@@ -1,7 +1,7 @@
 # variable.tf
 
 variable "my_ip" {
-    default = "0.0.0.0/32"  # replace with own ip
+    default = "195.213.42.218/32"  # replace with own ip
 }
 
 variable "name" {
@@ -17,7 +17,7 @@ variable "vpc_id" {
 }
 
 variable "webapp_ami_id" {
-    default = "ami-09f4421394f9096d9"
+    default = "ami-028079c0f4d1eafd0"
 }
 
 variable "db_ami_id" {
