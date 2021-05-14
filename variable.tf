@@ -17,7 +17,8 @@ variable "vpc_id" {
 }
 
 variable "webapp_ami_id" {
-    default = "ami-028079c0f4d1eafd0"
+    default = "ami-08430e59b925d3198"
+    # default = "ami-028079c0f4d1eafd0"  # old version
 }
 
 variable "db_ami_id" {

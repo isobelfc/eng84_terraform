@@ -120,12 +120,12 @@ resource "aws_security_group" "db_sg" {
     vpc_id = aws_vpc.vpc.id
 
     # inbound rules
-    # ingress {
-    #     from_port = "22"  # to ssh into
-    #     to_port = "22"
-    #     protocol = "tcp"
-    #     cidr_blocks = ["${var.my_ip}"]  # from my ip only
-    # }
+    ingress {
+        from_port = "80"
+        to_port = "80"
+        protocol = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]  # allow all
+    }
 
     ingress {
         from_port = "27017"  # database access
@@ -186,6 +186,7 @@ resource "aws_instance" "db_instance" {
     ami = var.db_ami_id
     instance_type = "t2.micro"
     associate_public_ip_address = true
+    private_ip = "10.0.1.139"
 
     tags = {
         Name = "${var.name}_db"
@@ -216,7 +217,7 @@ resource "aws_launch_template" "app_template" {
         }
     }
 
-    user_data = file("deployment.sh")  # run provisioning commands in instance
+    user_data = base64encode(templatefile("./deployment.tpl", {db_private_ip = "${aws_instance.db_instance.private_ip}"}))
 }
 
 
@@ -263,14 +264,3 @@ resource "aws_autoscaling_group" "asg" {
         version = "$Latest"
     }
 }
-
-
-# to add:
-# commands in app instance:
-# sudo echo "export DB_HOST=mongodb://db_private_ip:27017/posts" >> ~/.bashrc
-# source ~/.bashrc
-# cd eng84_cicd_jenkins/app
-# nodejs seeds/seed.js
-# pm2 kill
-# pm2 start eng84_cicd_jenkins/app/app.js
-# nodejs app.js
