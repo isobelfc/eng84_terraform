@@ -81,7 +81,7 @@ resource "aws_route_table_association" "rt_association_2" {
 
 
 resource "aws_security_group" "app_sg" {
-    name = "${var.name}_sg"
+    name = "${var.name}_app_sg"
     description = "app group"
     vpc_id = aws_vpc.vpc.id
 
@@ -100,11 +100,38 @@ resource "aws_security_group" "app_sg" {
         cidr_blocks = ["${var.my_ip}"]  # from my ip only
     }
 
+    # outbound rules
+    egress {
+        from_port = 0
+        to_port = 0
+        protocol = "-1"  # allow all
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    tags = {
+        Name = "${var.name}_app_sg"
+    }
+}
+
+
+resource "aws_security_group" "db_sg" {
+    name = "${var.name}_db_sg"
+    description = "db group"
+    vpc_id = aws_vpc.vpc.id
+
+    # inbound rules
+    ingress {
+        from_port = "22"  # to ssh into
+        to_port = "22"
+        protocol = "tcp"
+        cidr_blocks = ["${var.my_ip}"]  # from my ip only
+    }
+
     ingress {
         from_port = "27017"  # database access
         to_port = "27017"
         protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]  # anywhere
+        security_groups = [aws_security_group.app_sg.id]  # from app instances
     }
 
     # outbound rules
@@ -116,7 +143,7 @@ resource "aws_security_group" "app_sg" {
     }
 
     tags = {
-        Name = "${var.name}_sg"
+        Name = "${var.name}_db_sg"
     }
 }
 
@@ -154,6 +181,22 @@ resource "aws_security_group" "app_sg" {
 # }
 
 
+# db instance, not in asg
+resource "aws_instance" "db_instance" {
+    ami = var.db_ami_id
+    instance_type = "t2.micro"
+    associate_public_ip_address = true
+
+    tags = {
+        Name = "${var.name}_db"
+    }
+
+    key_name = "${var.aws_key_name}"
+    vpc_security_group_ids = ["${aws_security_group.db_sg.id}"]
+    subnet_id = aws_subnet.subnet_1.id
+}
+
+
 # 2nd iteration - use launch template in autoscaling group
 resource "aws_launch_template" "app_template" {
     image_id = var.webapp_ami_id
@@ -170,27 +213,6 @@ resource "aws_launch_template" "app_template" {
         resource_type = "instance"
         tags = {
             Name = "${var.name}_app"
-        }
-    }
-}
-
-
-# template for db instance
-resource "aws_launch_template" "db_template" {
-    image_id = var.db_ami_id
-    instance_type = "t2.micro"
-    key_name = var.aws_key_name
-
-    network_interfaces {
-        associate_public_ip_address = true
-        security_groups = [aws_security_group.app_sg.id]
-        subnet_id = aws_subnet.subnet_1.id
-    }
-
-    tag_specifications {
-        resource_type = "instance"
-        tags = {
-            Name = "${var.name}_db"
         }
     }
 }
@@ -238,45 +260,6 @@ resource "aws_autoscaling_group" "asg" {
         id = aws_launch_template.app_template.id
         version = "$Latest"
     }
-
-    # mixed_instances_policy {
-    #     launch_template {
-    #         launch_template_specification {
-    #             launch_template_id = aws_launch_template.app_template.id
-    #             # version = "$Latest"
-    #         }
-    #
-    #         # override {
-    #         #     instance_type = "t2.micro"
-    #         #     weighted_capacity = "1"
-    #         # }
-    #
-    #         override {
-    #             instance_type = "t2.micro"
-    #             launch_template_specification {
-    #                 launch_template_id = aws_launch_template.db_template.id
-    #                 # version = "$Latest"
-    #             }
-    #             weighted_capacity = "1"
-    #         }
-    #     }
-    # }
-}
-
-
-# db instance, not in asg
-resource "aws_instance" "db_instance" {
-    ami = var.db_ami_id
-    instance_type = "t2.micro"
-    associate_public_ip_address = true
-
-    tags = {
-        Name = "${var.name}_db"
-    }
-
-    key_name = "${var.aws_key_name}"
-    vpc_security_group_ids = ["${aws_security_group.app_sg.id}"]
-    subnet_id = aws_subnet.subnet_1.id
 }
 
 
