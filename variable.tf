@@ -1,7 +1,7 @@
 # variable.tf
 
 variable "my_ip" {
-    default = "195.213.42.218/32"  # replace with own ip
+    default = "0.0.0.0/32"  # replace with own ip
 }
 
 variable "name" {

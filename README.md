@@ -77,13 +77,19 @@ resource "aws_instance" "app_instance"{
 
 ## Load Balancers
 ### Application Load Balancer
+- allows traffic to be connected to the backend instances based on the request information
+
+![Application load balancer diagram](images/application_load_balancer.png)
 
 ### Network Load Balancer
 - switches between the tasks, e.g. payment gateway and product display
 
+![Network load balancer diagram](images/network_load_balancer.png)
+
 ### Classic Load Balancer
 - works between the different availability zones
 - redirects traffic if one AZ is down
+- does not take the content of the requests into account
 
 ![Classic load balancer diagram](images/classic_load_balancer.png)
 

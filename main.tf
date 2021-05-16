@@ -5,7 +5,7 @@
 
 # provider is a keyword in Terraform to define the name of cloud provider
 
-provider "aws"{
+provider "aws" {
     region = var.region
 }
 
